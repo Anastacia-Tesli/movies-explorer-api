@@ -78,7 +78,7 @@ app.post(
 );
 app.use(auth);
 app.use('/users', require('./routes/users'));
-app.use('/cards', require('./routes/movies'));
+app.use('/movies', require('./routes/movies'));
 
 app.use((req, res, next) => {
   next(new NotFoundError('404. Такой страницы не существует.'));
