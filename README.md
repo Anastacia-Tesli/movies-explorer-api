@@ -1,3 +1,3 @@
 # movies-explorer-api
 
-Домен проекта https://movies-explorer.nomoredomains.work
+Домен проекта https://api.movies-explorer.nomoredomains.work
