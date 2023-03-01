@@ -5,7 +5,7 @@ const { UnauthorizedError } = require('../errors/index');
 module.exports.auth = (req, res, next) => {
   const { authorization } = req.headers;
 
-  if (!authorization || !authorization.startsWith('Bearer ')) {
+  if (!authorization) {
     throw new UnauthorizedError(UNAUTHORIZED_ERROR_MESSAGE);
   }
 
@@ -13,7 +13,10 @@ module.exports.auth = (req, res, next) => {
   let payload;
 
   try {
-    payload = jwt.verify(token, process.env.JWT_SECRET);
+    payload = jwt.verify(
+      token,
+      process.env.NODE_ENV === 'production' ? process.env.JWT_SECRET : 'secretkeyfrommesto',
+    );
   } catch (err) {
     next(new UnauthorizedError(UNAUTHORIZED_ERROR_MESSAGE));
   }
