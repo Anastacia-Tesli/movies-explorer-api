@@ -1,46 +1,9 @@
 const router = require('express').Router();
-const { celebrate, Joi } = require('celebrate');
+const { createMovieValidator, deleteMovieValidator } = require('../validators/movies');
 const { getMovies, createMovie, deleteMovie } = require('../controllers/movies');
 
 router.get('/', getMovies);
-router.post(
-  '/',
-  celebrate({
-    body: Joi.object().keys({
-      country: Joi.string().required(),
-      director: Joi.string().required(),
-      duration: Joi.number().required(),
-      year: Joi.string().required(),
-      description: Joi.string().required(),
-      image: Joi.string()
-        .required()
-        .pattern(
-          /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/,
-        ),
-      trailerLink: Joi.string()
-        .required()
-        .pattern(
-          /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/,
-        ),
-      nameRU: Joi.string().required(),
-      nameEN: Joi.string().required(),
-      thumbnail: Joi.string()
-        .required()
-        .pattern(
-          /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_+.~#?&//=]*)/,
-        ),
-    }),
-  }),
-  createMovie,
-);
-router.delete(
-  '/:movieId',
-  celebrate({
-    params: Joi.object().keys({
-      movieId: Joi.string(),
-    }),
-  }),
-  deleteMovie,
-);
+router.post('/', createMovieValidator, createMovie);
+router.delete('/:movieId', deleteMovieValidator, deleteMovie);
 
 module.exports = router;

@@ -7,6 +7,7 @@ const {
   AUTH_ERROR_MESSAGE,
   NOT_FOUND_USER_MESSAGE,
   INCORRECT_ERROR_MESSAGE,
+  CONFLICT_ERROR_MESSAGE,
 } = require('../utils/constants');
 const {
   IncorrectError,
@@ -52,27 +53,25 @@ module.exports.login = (req, res, next) => {
 module.exports.createUser = (req, res, next) => {
   const { name, email, password } = req.body;
 
-  bcrypt
-    .hash(password, 10)
-    .then((hash) => {
-      User.create({
-        name,
-        email,
-        password: hash,
+  bcrypt.hash(password, 10).then((hash) => {
+    User.create({
+      name,
+      email,
+      password: hash,
+    })
+      .then(() => {
+        res.status(CREATED_CODE).send({ name, email });
+      })
+      .catch((err) => {
+        if (err instanceof mongoose.Error.ValidationError) {
+          next(new IncorrectError(INCORRECT_ERROR_MESSAGE));
+        }
+        if (err.code === 11000) {
+          next(new ConflictError(CONFLICT_ERROR_MESSAGE));
+        }
+        return next(err);
       });
-    })
-    .then(() => {
-      res.status(CREATED_CODE).send({ name, email });
-    })
-    .catch((err) => {
-      if (err instanceof mongoose.Error.ValidationError) {
-        next(new IncorrectError(`${INCORRECT_ERROR_MESSAGE} при создании пользователя.`));
-      }
-      if (err.code === 11000) {
-        throw new ConflictError('Пользователь с таким email уже зарегистрирован');
-      }
-      next(err);
-    });
+  });
 };
 
 module.exports.getUser = (req, res, next) => {
@@ -107,7 +106,10 @@ module.exports.updateUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        next(new IncorrectError(`${INCORRECT_ERROR_MESSAGE} при обновлении информации.`));
+        next(new IncorrectError(INCORRECT_ERROR_MESSAGE));
+      }
+      if (err.code === 11000) {
+        next(new ConflictError(CONFLICT_ERROR_MESSAGE));
       }
       return next(err);
     });
