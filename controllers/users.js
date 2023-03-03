@@ -1,11 +1,10 @@
+/* eslint-disable object-curly-newline */
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET_DEV } = require('../utils/config');
 const User = require('../models/user');
 const {
   CREATED_CODE,
-  CONFLICT_ERROR_MESSAGE,
   AUTH_ERROR_MESSAGE,
   NOT_FOUND_USER_MESSAGE,
   INCORRECT_ERROR_MESSAGE,
@@ -37,7 +36,7 @@ module.exports.login = (req, res, next) => {
         {
           _id: user._id,
         },
-        process.env.NODE_ENV === 'production' ? process.env.JWT_SECRET : JWT_SECRET_DEV,
+        process.env.NODE_ENV === 'production' ? process.env.JWT_SECRET : 'secretkeyfrommesto',
         {
           expiresIn: '7d',
         },
@@ -54,25 +53,27 @@ module.exports.login = (req, res, next) => {
 module.exports.createUser = (req, res, next) => {
   const { name, email, password } = req.body;
 
-  bcrypt.hash(password, 10).then((hash) => {
-    User.create({
-      name,
-      email,
-      password: hash,
-    })
-      .then(() => {
-        res.status(CREATED_CODE).send({ name, email });
-      })
-      .catch((err) => {
-        if (err instanceof mongoose.Error.ValidationError) {
-          next(new IncorrectError(INCORRECT_ERROR_MESSAGE));
-        }
-        if (err.code === 11000) {
-          next(new ConflictError(CONFLICT_ERROR_MESSAGE));
-        }
-        next(err);
+  bcrypt
+    .hash(password, 10)
+    .then((hash) => {
+      User.create({
+        name,
+        email,
+        password: hash,
       });
-  });
+    })
+    .then(() => {
+      res.status(CREATED_CODE).send({ name, email });
+    })
+    .catch((err) => {
+      if (err instanceof mongoose.Error.ValidationError) {
+        next(new IncorrectError(`${INCORRECT_ERROR_MESSAGE} при создании пользователя.`));
+      }
+      if (err.code === 11000) {
+        throw new ConflictError('Пользователь с таким email уже зарегистрирован');
+      }
+      next(err);
+    });
 };
 
 module.exports.getUser = (req, res, next) => {
@@ -107,10 +108,7 @@ module.exports.updateUser = (req, res, next) => {
     })
     .catch((err) => {
       if (err instanceof mongoose.Error.ValidationError) {
-        next(new IncorrectError(INCORRECT_ERROR_MESSAGE));
-      }
-      if (err.code === 11000) {
-        next(new ConflictError(CONFLICT_ERROR_MESSAGE));
+        next(new IncorrectError(`${INCORRECT_ERROR_MESSAGE} при обновлении информации.`));
       }
       return next(err);
     });

@@ -1,29 +1,32 @@
 require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet');
 const mongoose = require('mongoose');
-const { errors } = require('celebrate');
-const limiter = require('./middlewares/limit');
-const router = require('./routes/index');
+const { celebrate, Joi, errors } = require('celebrate');
+const { login, createUser } = require('./controllers/users');
+
+const { NotFoundError } = require('./errors/index');
+const { auth } = require('./middlewares/auth');
 const { handleError } = require('./middlewares/errors');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-const { MONGO_DEV, JWT_SECRET_DEV } = require('./utils/config');
 
 const { PORT = 3000 } = process.env;
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(helmet());
-app.use(limiter);
 
-mongoose.connect(process.env.NODE_ENV === 'production' ? process.env.MONGOPATH : MONGO_DEV, {
-  useNewUrlParser: true,
-});
+mongoose.connect(
+  process.env.NODE_ENV === 'production'
+    ? process.env.MONGOPATH
+    : 'mongodb://localhost:27017/filmsdb',
+  {
+    useNewUrlParser: true,
+  },
+);
 mongoose.set('strictQuery', true);
 
 if (!process.env.JWT_SECRET) {
-  process.env.JWT_SECRET = JWT_SECRET_DEV;
+  process.env.JWT_SECRET = 'secretkeyfrommesto';
 }
 
 app.use(requestLogger);
@@ -52,7 +55,34 @@ app.use((req, res, next) => {
   return null;
 });
 
-app.use('/', router);
+app.post(
+  '/signin',
+  celebrate({
+    body: Joi.object().keys({
+      email: Joi.string().required().email(),
+      password: Joi.string().required(),
+    }),
+  }),
+  login,
+);
+app.post(
+  '/signup',
+  celebrate({
+    body: Joi.object().keys({
+      name: Joi.string().min(2).max(30),
+      email: Joi.string().required().email(),
+      password: Joi.string().required(),
+    }),
+  }),
+  createUser,
+);
+app.use(auth);
+app.use('/users', require('./routes/users'));
+app.use('/movies', require('./routes/movies'));
+
+app.use((req, res, next) => {
+  next(new NotFoundError('404. Такой страницы не существует.'));
+});
 app.use(errorLogger);
 app.use(errors());
 app.use(handleError);

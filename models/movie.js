@@ -46,10 +46,6 @@ const movieSchema = new mongoose.Schema({
       message: 'Некорректный формат ссылки',
     },
   },
-  movieId: {
-    type: Number,
-    required: true,
-  },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'user',
