@@ -1,4 +1,3 @@
-/* eslint-disable object-curly-newline */
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
