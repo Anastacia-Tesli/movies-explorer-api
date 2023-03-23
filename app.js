@@ -26,7 +26,7 @@ app.use(requestLogger);
 const allowedCors = [
   'https://movies-explorer.nomoredomains.work',
   'http://movies-explorer.nomoredomains.work',
-  'localhost:3000',
+  'http://localhost:3000',
 ];
 app.use((req, res, next) => {
   const { origin } = req.headers;
